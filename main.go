@@ -13,7 +13,7 @@ import (
 type DNSCred map[string]string
 
 func main() {
-	http.HandleFunc("/udpate", updateIP)
+	http.HandleFunc("/update", updateIP)
 	http.HandleFunc("/_ping", ping)
 	log.Println("Server started")
 	log.Fatal(http.ListenAndServe(":8080", nil))
