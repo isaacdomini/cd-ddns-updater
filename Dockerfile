@@ -5,6 +5,7 @@ WORKDIR /go-app
 RUN go build -o server
 
 FROM alpine:3.15
+RUN mkdir -p /data
 WORKDIR /go-app
 COPY --from=GO_BUILD /go-app/server /go-app/server
 EXPOSE 8080
