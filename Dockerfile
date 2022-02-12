@@ -1,12 +1,12 @@
 FROM golang:1.17.7 AS GO_BUILD
 ENV CGO_ENABLED 0
-COPY . /go-app
-WORKDIR /go-app
+COPY . /app
+WORKDIR /app
 RUN go build -o server
 
 FROM alpine:3.15
 RUN mkdir -p /data
-WORKDIR /go-app
-COPY --from=GO_BUILD /go-app/server /go-app/server
+WORKDIR /app
+COPY --from=GO_BUILD /app/server /app/server
 EXPOSE 8080
 CMD ["./server"]
