@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 
 	"gopkg.in/yaml.v2"
 )
@@ -20,24 +21,36 @@ func main() {
 }
 
 func updateIP(w http.ResponseWriter, r *http.Request) {
-	// fmt.Println(r)
 	ip := r.FormValue("ip")
 
 	log.Printf("Updating with IP: %s\n", ip)
 
 	errCount := 0
 	for _, cred := range dnsSecrets() {
-		params := url.Values{}
-		params.Add("hostname", cred["hostname"])
-		params.Add("myip", ip)
-		log.Printf("Updating %s\n", cred["hostname"])
+		if cred["provider"] == "google" {
+			params := url.Values{}
+			params.Add("hostname", cred["hostname"])
+			params.Add("myip", ip)
+			log.Printf("Updating %s\n", cred["hostname"])
 
-		googUrl := fmt.Sprintf("https://%s:%s@domains.google.com/nic/update?%s", cred["username"], cred["password"], params.Encode())
-		_, err := http.Get(googUrl)
-		if err != nil {
-			log.Fatalln(err)
-			errCount += 1
-			log.Printf("Error with %s\n", cred["hostname"])
+			googUrl := fmt.Sprintf("https://%s:%s@domains.google.com/nic/update?%s", cred["username"], cred["password"], params.Encode())
+			_, err := http.Get(googUrl)
+			if err != nil {
+				// log.Printf(err)
+				errCount += 1
+				log.Printf("Error with %s\n", cred["hostname"])
+			}
+		} else if cred["provider"] == "freenom" {
+			log.Printf("Updating %s\n", cred["hostname"])
+			cmd := exec.Command("bash", "/freenom/freenom-script-master/freenom.sh", "-u", cred["hostname"], "-m", ip)
+			_, err := cmd.Output()
+			if werr, ok := err.(*exec.ExitError); ok {
+				if s := werr.Error(); s != "0" {
+					// log.Printf(err)
+					errCount += 1
+					log.Printf("Error with %s\n", cred["hostname"])
+				}
+			}
 		}
 	}
 
